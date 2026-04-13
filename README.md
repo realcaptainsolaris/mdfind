@@ -22,7 +22,7 @@ Designed to be used together with `fzf` for fast, keyboard-driven navigation.
 Requires Rust.
 
 ```bash
-git clone <your-repo>
+git clone https://github.com/realcaptainsolaris/mdfind
 cd mdfind
 cargo +nightly build --release
 ````
