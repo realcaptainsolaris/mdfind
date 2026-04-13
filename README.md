@@ -1,207 +1,169 @@
 # mdfind
 
-Lokales CLI-Tool zur schnellen Suche in Markdown-Notizen.
+Simple CLI tool to create and search Markdown notes.
 
-Ziel: eigener Ersatz für tldr / cheat.sh auf Basis der eigenen Wissensbasis.
+Designed to be used together with `fzf` for fast, keyboard-driven navigation.
 
 ---
 
 ## Features
 
-- durchsucht `.md` Dateien rekursiv in `~/docs/mdfind`
-- erkennt Überschriften (`#`, `##`, …)
-- Kategorie = Ordnerstruktur
-- Tags aus Datei (`tags:`)
-- Filter nach Tags
-- fzf-kompatible Ausgabe
-- interaktive Erstellung neuer Notizen
+- Create notes with title, tags, and category
+- Search Markdown headers (`#`, `##`, ...)
+- Filter by tag or folder
+- Works great with `fzf` + `nvim`
 
 ---
 
 ## Installation
-Unter Umständen mit nightly Rust-Toolchain:
+
+### 1. Clone & build
+
+Requires Rust.
 
 ```bash
+git clone <your-repo>
+cd mdfind
 cargo +nightly build --release
 ````
 
-Binary liegt danach in:
+Binary will be here:
 
-```text
+```bash
 target/release/mdfind
 ```
 
-Optional:
+You may want to move it:
 
 ```bash
-cp mdfind/target/release/mdfind ~/.local/bin/mdfind
+cp target/release/mdfind ~/.local/bin/
 ```
 
 ---
 
-## Verzeichnisstruktur
+## Notes Directory
 
-```text
-~/docs/mdfind/
-├── linux/
-├── python/
-├── rust/
-```
-
-→ Ordner = Kategorie (wird automatisch als Tag verwendet)
-
----
-
-## Dateiformat
-
-```markdown
-# Titel
-
-date: 2026-03-18
-tags: linux,fs
-
-## Abschnitt
-Inhalt
-```
-
----
-
-## Nutzung
-
-### Suche
+By default, notes are stored in:
 
 ```bash
-mdfind
-mdfind inode
+~/docs/mdfind
+```
+
+You can change this in the code:
+
+```rust
+const DIR_NAME: &str = "docs/mdfind";
 ```
 
 ---
 
-### Tag-Filter
+## Usage
 
-```bash
-mdfind -t linux
-mdfind inode -t fs
-```
-
-* berücksichtigt:
-
-  * Ordnername (Kategorie)
-  * `tags:` in Datei
-
----
-
-### Output-Format
-
-```text
-path:line: title
-```
-
-Beispiel:
-
-```text
-linux/fs.md:42: Inodes
-```
-
----
-
-## fzf Integration
-
-### Interaktiv suchen + öffnen
-
-```bash
-mdfind | fzf \
-  --delimiter ':' \
-  --preview 'bat {1} --highlight-line {2}' \
-  --bind 'enter:execute(nvim +{2} {1})'
-```
-
----
-
-### als Funktion
-
-```bash
-mde() {
-  mdfind | fzf \
-    --delimiter ':' \
-    --preview 'bat {1} --highlight-line {2}' \
-    --bind 'enter:execute(nvim +{2} {1})'
-}
-```
-
----
-
-## Notizen erstellen
+### Create a note
 
 ```bash
 mdfind create
 ```
 
-Interaktiv:
+You will be prompted for:
 
-* Title
-* Tags
-* Category (Ordner)
-
-Erzeugt:
-
-```markdown
-# Titel
-
-date: YYYY-MM-DD
-tags: ...
-```
-
-Pfad:
-
-```text
-~/docs/mdfind/<category>/<title>.md
-```
+* title
+* tags
+* category (folder)
 
 ---
 
-## Design
-
-* kein Markdown-Parser (Regex reicht)
-* einfache Tags (kein YAML)
-* Kategorie über Ordner
-* stdout-first (Unix-Philosophie)
-
----
-
-## Erweiterungen (geplant)
-
-* Cache / Index (mtime-basiert)
-* Ranking nach Nutzung
-* Volltextsuche gewichten
-* SQLite Backend
-* Neovim Integration (Quickfix)
-
----
-
-## Abhängigkeiten
-
-* walkdir
-* regex
-* clap
-* chrono
-* dialoguer
-
----
-
-## Minimal Workflow
+### Search notes
 
 ```bash
-mdfind "problem" | fzf
+mdfind <query>
+mdfind --tag rust
+mdfind <query> --tag rust
 ```
 
-→ auswählen → direkt in Editor
+Search is performed on Markdown headers.
 
 ---
 
-## Motivation
+## fzf Integration
 
-* schneller als Websuche
-* eigenes Wissen zentralisiert
-* reproduzierbare Lösungen
+This tool is intended to be used with `fzf`.
 
+### Requirements
+
+* `fzf`
+* `bat` (on Debian/Ubuntu this is `batcat`)
+* `nvim`
+
+---
+
+### Zsh
+
+Add to your `.zshrc`:
+
+```bash
+mde() {
+  mdfind | fzf --ansi \
+    --preview 'batcat $(echo {} | cut -d: -f1) --highlight-line $(echo {} | cut -d: -f2)' \
+    --bind 'enter:execute(nvim +$(echo {} | cut -d: -f2) $(echo {} | cut -d: -f1))'
+}
+```
+
+---
+
+### Bash
+
+Add to your `.bashrc`:
+
+```bash
+mde() {
+  mdfind | fzf --ansi \
+    --preview 'batcat $(echo {} | cut -d: -f1) --highlight-line $(echo {} | cut -d: -f2)' \
+    --bind 'enter:execute(nvim +$(echo {} | cut -d: -f2) $(echo {} | cut -d: -f1))'
+}
+```
+
+---
+
+## Output Format
+
+Each result line:
+
+```
+path:line: title
+```
+
+This is parsed by `fzf` using `cut`.
+
+---
+
+## Notes
+
+* `batcat` is required for preview (Debian/Ubuntu naming)
+* Each file returns at most one match
+* Only headers are searched (not full content)
+
+---
+
+## Philosophy
+
+* minimal
+* fast
+* terminal-first workflow
+* no database, no indexing
+
+---
+
+## License
+
+MIT
+
+```
+
+---
+
+wenn du willst, kann ich dir noch:
+
+- ein gif für github bauen (wirkt massiv besser)
+- oder einen „pro“ fzf workflow mit preview scrolling etc.
+```
