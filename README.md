@@ -158,12 +158,3 @@ This is parsed by `fzf` using `cut`.
 
 MIT
 
-```
-
----
-
-wenn du willst, kann ich dir noch:
-
-- ein gif für github bauen (wirkt massiv besser)
-- oder einen „pro“ fzf workflow mit preview scrolling etc.
-```
